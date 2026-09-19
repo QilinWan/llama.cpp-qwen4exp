@@ -41,6 +41,23 @@ import {
  * @param latexExpressions - An array used to collect extracted LaTeX expressions.
  * @returns The processed string with LaTeX replaced by placeholders.
  */
+
+/** Count `$$` delimiters outside code blocks; if odd, append a closing `$$`. */
+function fixUnclosedDisplayMath(content: string): string {
+	const codeBlockRegexp = /```[\s\S]*?```|`[^`\n]*`/g;
+	const sanitized = content.replace(codeBlockRegexp, (match) => ' '.repeat(match.length));
+	let count = 0;
+	let idx = sanitized.indexOf('$$');
+	while (idx !== -1) {
+		count++;
+		idx = sanitized.indexOf('$$', idx + 2);
+	}
+	if (count % 2 === 1) {
+		return content + '$$';
+	}
+	return content;
+}
+
 export function maskInlineLaTeX(content: string, latexExpressions: string[]): string {
 	if (!content.includes(LATEX_INLINE_DELIMITER)) {
 		return content;
@@ -187,6 +204,14 @@ export function preprocessLaTeX(content: string): string {
 
 	// Save original before the function mutates `content` through steps 0-8
 	const originalContent = content;
+
+	// Step 0.5: Fix unclosed display-math delimiters ($$ without a closing $$).
+	// Models occasionally emit a `$$...` block whose closing `$$` is missing
+	// (typically at the very end of a long message). remark-math then treats the
+	// block as plain text and the LaTeX leaks through unrendered. We count the
+	// `$$` delimiters OUTSIDE code blocks; an odd count means one block is
+	// unclosed — append the missing closer so KaTeX can render it.
+	content = fixUnclosedDisplayMath(content);
 
 	// Every step below keys off a `$` or a backslash escape (\[ \] \( \) \ce{ \pu{).
 	// With neither present the protect/restore passes round-trip the input

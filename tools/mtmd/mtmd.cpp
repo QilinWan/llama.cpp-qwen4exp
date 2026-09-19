@@ -1156,7 +1156,9 @@ struct mtmd_tokenizer {
         for (const auto & part : parts_str) {
             if (part == ctx->media_marker) {
                 if (i_bm >= bitmaps.size()) {
-                    throw std::runtime_error(string_format("number of media markers in text (%zu) exceeds number of bitmaps (%zu)", i_bm + 1, bitmaps.size()));
+                    // 宽松模式：孤立媒体标记（无对应图片）丢弃不抛错
+                    // 场景：Hermes web_extract 工具输出含 [IMAGE: ...] 占位符但请求未带图片
+                    continue;
                 }
                 parts.push_back({"", bitmaps[i_bm++]});
             } else {
