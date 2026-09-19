@@ -300,6 +300,16 @@ export const SPLASH_LINK = {
 import type { SvelteKitPWAOptions } from '@vite-pwa/sveltekit';
 
 export const SVELTEKIT_PWA_OPTIONS: SvelteKitPWAOptions = {
+	// Self-hosted dist deployment: the static bundle is built and swapped in
+	// out-of-band (vite build -> dist directory served by llama-server). A
+	// precaching service worker only creates stale-shell problems (deploys
+	// invisible until the waiting worker is activated) and drives the
+	// "Update available" prompt, which cannot upgrade anything the server
+	// does not already serve. A self-destroying worker replaces any worker
+	// previous versions registered, clears its caches and unregisters, so
+	// every plain refresh always fetches the current dist from disk.
+	selfDestroying: true,
+
 	devOptions: {
 		enabled: true,
 		suppressWarnings: true

@@ -18,13 +18,14 @@ import { rehypeResolveAttachmentImages } from './plugins/rehype/resolve-attachme
 import { rehypeSvgPre } from './plugins/rehype/svg-pre';
 import { rehypeRestoreTableHtml } from './plugins/rehype/table-html-restorer';
 import { remarkLiteralHtml } from './plugins/remark/literal-html';
+import { remarkMathReclassify } from './plugins/remark/math-reclassify';
 import { FileTypeText } from '$lib/enums/files.enums';
 import type { DatabaseMessageExtra } from '$lib/types/database';
 import type { Root as HastRoot } from 'hast';
 import { all as lowlightAll } from 'lowlight';
 import type { Root as MdastRoot } from 'mdast';
 import rehypeHighlight from 'rehype-highlight';
-import rehypeKatex from 'rehype-katex';
+import { rehypeKatexRobust } from './plugins/rehype/katex-robust';
 import rehypeStringify from 'rehype-stringify';
 import { remark } from 'remark';
 import remarkBreaks from 'remark-breaks';
@@ -54,7 +55,7 @@ function buildPipeline({
 	let proc: any = remark().use(remarkGfm); // GitHub Flavored Markdown
 
 	if (!disableMath) {
-		proc = proc.use(remarkMath); // Parse $inline$ and $$block$$ math
+		proc = proc.use(remarkMath).use(remarkMathReclassify); // Parse math; promote lone math lines to display
 	}
 
 	proc = proc
@@ -64,7 +65,7 @@ function buildPipeline({
 		.use(remarkRehype); // Convert Markdown AST to rehype
 
 	if (!disableMath) {
-		proc = proc.use(rehypeKatex); // Render math using KaTeX
+		proc = proc.use(rehypeKatexRobust); // Render math: mode-preserving, never red
 	}
 
 	const pipeline = proc

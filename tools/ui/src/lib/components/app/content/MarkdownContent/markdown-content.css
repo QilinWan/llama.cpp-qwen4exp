@@ -94,6 +94,24 @@
 	font-size: 0.875rem;
 }
 
+/* Math is NOT code. remark-math wraps inline formulas in
+   <code class="language-math math-inline">, which used to catch the
+   inline-code chip above: gray --muted-foreground text, --muted background
+   and a 0.875rem shrink — while display math (whose <pre> wrapper the
+   renderer replaces with raw HTML) inherited the normal prose color.
+   The visible result was gray inline formulas next to white display ones.
+   Reset the chip skin for math wrappers so KaTeX text follows the
+   surrounding prose color in every mode. Author-intended colors
+   (\color / \textcolor) are inline styles on inner spans and still win. */
+.markdown-content :global(code.math-inline),
+.markdown-content :global(code.math-display) {
+	background: transparent;
+	color: inherit;
+	padding: 0;
+	border-radius: 0;
+	font-size: inherit;
+}
+
 .markdown-content :global(pre) {
 	display: inline;
 	margin: 0 !important;

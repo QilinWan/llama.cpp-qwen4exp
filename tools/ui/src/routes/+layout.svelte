@@ -5,7 +5,7 @@
 	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import { SidebarNavigation } from '$lib/components/app';
-	import { PwaMetaTags, PwaRefreshAlert } from '$lib/components/pwa';
+	import { PwaMetaTags } from '$lib/components/pwa';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		FAVICON_PATHS,
@@ -56,9 +56,11 @@
 		settingsStore.config[SETTINGS_KEYS.SHOW_BUILD_VERSION] as boolean
 	);
 
-	// Keep the hook object intact: destructuring needRefreshByStorage reads the getter once and freezes it
-	const pwa = usePwa();
-	const { needRefresh, updateServiceWorker } = pwa;
+	// Register the (self-destroying) service worker so any worker installed by
+	// earlier builds is replaced, flushed and unregistered on visit. No update UI:
+	// with a self-hosted dist, plain refreshes always serve the current build, and
+	// nothing should prompt the user to "update".
+	usePwa();
 
 	function updateFavicon() {
 		const dark = deviceStore.systemTheme.isDark;
@@ -335,15 +337,10 @@
 	<Toaster richColors />
 </Tooltip.Provider>
 
-<!-- PWA update prompt + version -->
+<!-- Build version display -->
 <div class="fixed right-4 bottom-4 z-9999 flex flex-col items-end gap-1">
 	{#if showBuildVersion && versionStore.build}
 		<span class="text-[10px] tabular-nums text-muted-foreground">{versionStore.build}</span>
 	{/if}
 
-	<PwaRefreshAlert
-		forceReload={pwa.needRefreshByStorage}
-		needRefresh={$needRefresh || pwa.needRefreshByStorage}
-		{updateServiceWorker}
-	/>
 </div>
